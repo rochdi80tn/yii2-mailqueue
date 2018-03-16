@@ -10,20 +10,13 @@ use nterms\mailqueue\Message;
 /**
  * This is the model class for table "{{%mail_queue}}".
  *
- * @property string $from
- * @property string $to
- * @property string $cc
- * @property string $bcc
  * @property string $subject
- * @property string $html_body
- * @property string $text_body
- * @property string $reply_to
- * @property string $charset
  * @property integer $created_at
  * @property integer $attempts
  * @property integer $last_attempt_time
  * @property integer $sent_time
  * @property string $time_to_send
+ * @property string $swift_message
  */
 class Queue extends ActiveRecord
 {
@@ -59,53 +52,13 @@ class Queue extends ActiveRecord
     {
         return [
             [['created_at', 'attempts', 'last_attempt_time', 'sent_time'], 'integer'],
-            [['time_to_send'], 'required'],
-            [['to', 'cc', 'bcc', 'subject', 'html_body', 'text_body', 'charset'], 'safe'],
+            [['time_to_send', 'swift_message'], 'required'],
+            [['subject'], 'safe'],
         ];
     }
-	
+
 	public function toMessage()
 	{
-		$from = unserialize($this->from);
-		$to = unserialize($this->to);
-		
-		if( !empty($from) && !empty($to) ) {
-			$cc = unserialize($this->cc);
-			$bcc = unserialize($this->bcc);
-			$reply_to = unserialize($this->reply_to);
-			
-			$message = new Message();
-			$message->setFrom($from)->setTo($to);
-			
-			if(!empty($cc)) {
-				$message->setCc($cc);
-			}
-			
-			if(!empty($bcc)) {
-				$message->setBcc($bcc);
-			}
-			
-			if(!empty($reply_to)) {
-				$message->setReplyTo($reply_to);
-			}
-
-			if(!empty($this->charset)) {
-				$message->setCharset($this->charset);
-			}
-			
-			$message->setSubject($this->subject);
-			
-			if(!empty($this->html_body)) {
-				$message->setHtmlBody($this->html_body);
-			}
-			
-			if(!empty($this->text_body)) {
-				$message->setTextBody($this->text_body);
-			}
-			
-			return $message;
-		}
-		
-		return null;
+		return unserialize(base64_decode($this->swift_message));
 	}
 }
